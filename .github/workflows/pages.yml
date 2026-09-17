@@ -36,9 +36,9 @@ jobs:
           cache: npm
           cache-dependency-path: scratch-editor/package-lock.json
 
-      - name: Install dependencies
+      - name: Install workspace dependencies
         working-directory: scratch-editor
-        run: npm ci
+        run: npm ci --include-workspace-root
 
       - name: Inject ScratchYouTube fetch hook
         run: |
@@ -48,7 +48,8 @@ jobs:
           p = Path('scratch-editor/packages/scratch-gui/src/playground/index.ejs')
           s = p.read_text()
           marker = '    <script src="scratchyoutube-hook.js"></script>\n'
-          s = s.replace('  </head>', marker + '  </head>')
+          if marker not in s:
+              s = s.replace('  </head>', marker + '  </head>')
           p.write_text(s)
           PY
 
