@@ -1,0 +1,82 @@
+name: Build ScratchYouTube GUI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ScratchYouTube repo
+        uses: actions/checkout@v4
+
+      - name: Checkout Scratch editor source
+        uses: actions/checkout@v4
+        with:
+          repository: scratchfoundation/scratch-editor
+          ref: develop
+          path: scratch-editor
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: scratch-editor/package-lock.json
+
+      - name: Install dependencies
+        working-directory: scratch-editor
+        run: npm ci
+
+      - name: Inject ScratchYouTube fetch hook
+        run: |
+          cp hook.js scratch-editor/packages/scratch-gui/src/playground/scratchyoutube-hook.js
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('scratch-editor/packages/scratch-gui/src/playground/index.ejs')
+          s = p.read_text()
+          marker = '    <script src="scratchyoutube-hook.js"></script>\n'
+          s = s.replace('  </head>', marker + '  </head>')
+          p.write_text(s)
+          PY
+
+      - name: Build Scratch GUI
+        working-directory: scratch-editor
+        run: npm run build --workspace @scratch/scratch-gui
+
+      - name: Prepare Pages site
+        run: |
+          mkdir -p site
+          cp -R scratch-editor/packages/scratch-gui/build/. site/
+          cp site/standalone.html site/index.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
