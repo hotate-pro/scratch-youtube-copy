@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScratchYouTube V0.1</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 32px; background: #f5f5f5; }
+    main { max-width: 900px; margin: auto; background: white; padding: 24px; border-radius: 16px; }
+    code { background: #eee; padding: 2px 6px; border-radius: 5px; }
+    #status { font-weight: 700; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>ScratchYouTube V0.1</h1>
+    <p id="status">起動中...</p>
+    <p>まずはこのページ自身の <code>fetch()</code> を監視できることを確認するテスト版。</p>
+    <button id="test">fetchテスト</button>
+    <pre id="log"></pre>
+  </main>
+  <script src="hook.js"></script>
+  <script>
+    const status = document.getElementById('status');
+    status.textContent = 'fetch hook installed ✓';
+    document.getElementById('test').onclick = async () => {
+      try {
+        const r = await fetch('./README.md');
+        const text = await r.text();
+        document.getElementById('log').textContent = text || '(READMEはまだありません)';
+      } catch (e) {
+        document.getElementById('log').textContent = String(e);
+      }
+    };
+  </script>
+</body>
+</html>
