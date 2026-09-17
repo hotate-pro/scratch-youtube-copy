@@ -1,23 +1,11 @@
 (() => {
   const originalFetch = window.fetch;
 
-  const addLog = (message) => {
-    console.log(message);
-
-    const write = () => {
-      let box = document.getElementById('hook-log');
-      if (!box) {
-        box = document.createElement('pre');
-        box.id = 'hook-log';
-        box.style.cssText = 'margin-top:16px;padding:12px;background:#111;color:#0f0;border-radius:8px;white-space:pre-wrap;max-height:300px;overflow:auto;';
-        document.body.appendChild(box);
-      }
-      box.textContent += message + '\n';
-    };
-
-    if (document.body) write();
-    else window.addEventListener('DOMContentLoaded', write, { once: true });
-  };
+  function log(message) {
+    console.log('[ScratchYouTube]', message);
+    const box = document.getElementById('log');
+    if (box) box.textContent += message + '\n';
+  }
 
   window.fetch = async function (...args) {
     const request = args[0];
@@ -29,25 +17,29 @@
       url = request.url;
     }
 
-    addLog('[HOOK] fetch detected\nURL: ' + url);
+    log('✓ FETCH DETECTED');
+    log('URL: ' + url);
+    log('');
 
     if (
       url.startsWith('https://translate-service.scratch.mit.edu/translate') ||
       url.startsWith('https://synthesis-service.scratch.mit.edu/synth')
     ) {
-      addLog('[HOOK] TARGET REQUEST!');
+      log('🎯 TARGET REQUEST!');
 
       try {
         const parsed = new URL(url);
-        addLog('[HOOK] text = ' + parsed.searchParams.get('text'));
+        log('text = ' + parsed.searchParams.get('text'));
       } catch (e) {
-        addLog('[HOOK] URL parse error: ' + e);
+        log('URL parse error: ' + e);
       }
+
+      log('');
     }
 
     return originalFetch.apply(this, args);
   };
 
   window.__scratchYouTubeFetchHook = true;
-  addLog('[HOOK] fetch hook installed!');
+  log('✓ fetch hook installed!');
 })();
